@@ -19,31 +19,7 @@ architecture Behaviour of sistemaPortao is
 
 begin
 
-    updateProcess : process(B, S)
-    begin
-
-        IF (B='1') THEN SA <= '1'; ELSE SA <= '0'; END if;
-
-        IF (S='1') THEN
-            IF (A='1' and F='0') THEN
-                A <= '0';
-                F <= '1';
-            ELSIF (A='0' and F='1') THEN
-                A <= '1';
-                F <= '0';
-            END IF;
-        ELSIF (B='1') THEN
-            IF (estado_atual=E0) THEN
-                F <= '0';
-                A <= '1';
-            ELSIF (estado_atual=E3) THEN
-                F <= '1';
-                A <= '0';
-            END IF;
-        END IF;
-    end process;
-
-    clockProcess: process(clk)
+    process(clk, B, S)
     begin
 
         IF (clk'event and clk='1') THEN
@@ -75,6 +51,24 @@ begin
                     SA <= '1';
                 ELSIF (A='0' and F='1') THEN estado_atual <= E1;
                 END IF;
+            END IF;
+        END IF;
+        
+        IF (S='1') THEN
+            IF (A='1' and F='0') THEN
+                A <= '0';
+                F <= '1';
+            ELSIF (A='0' and F='1') THEN
+                A <= '1';
+                F <= '0';
+            END IF;
+        ELSIF (B='1') THEN
+            IF (estado_atual=E0) THEN
+                F <= '0';
+                A <= '1';
+            ELSIF (estado_atual=E3) THEN
+                F <= '1';
+                A <= '0';
             END IF;
         END IF;
     end process;
