@@ -4,9 +4,11 @@ use IEEE.numeric_std.all;
 
 entity sistemaPortao is
     port(
-        clk: in std_logic;
+        
+        clk, reset: in std_logic;
         B, S: in std_logic;
-        SA, SF: out std_logic
+        
+        SA, SF, A, F: out std_logic
     );
 end sistemaPortao;
 
@@ -14,66 +16,91 @@ architecture Behaviour of sistemaPortao is
 
     TYPE estado is (E0, E1, E2, E3);
     signal estado_atual: estado := E0;
+    signal Abrindo_signal : std_logic := '0';
+    signal Fechando_signal : std_logic := '0';
 
 begin
 
-    process(clk, B, S)
+    process(clk, reset)
 
-    variable A : std_logic := '0';
-    variable F : std_logic := '0';
+    variable Abrindo_variable : std_logic := Abrindo_signal;
+    variable Fechando_variable : std_logic := Fechando_signal;
 
     begin
 
-        IF (clk'event and clk='1') THEN
+        IF (reset='1') THEN
+            estado_atual <= E0;
+            SA <= '0';
+            SF <= '1';
+            A <= '0';
+            F <= '0';
 
+        ELSIF (clk'event and clk='1') THEN
+
+            ------------------------------------------
+            -- LÓGICA DE MOVIMENTAÇÃO DA PORTA (A & F)
             IF (S='1') THEN
-                IF (A='1' and F='0') THEN
-                    A := '0';
-                    F := '1';
-                ELSIF (A='0' and F='1') THEN
-                    A := '1';
-                    F := '0';
+                IF (Abrindo_variable='1' and Fechando_variable='0') THEN
+                    Abrindo_variable := '0';
+                    Fechando_variable := '1';
+                ELSIF (Abrindo_variable='0' and Fechando_variable='1') THEN
+                    Abrindo_variable := '1';
+                    Fechando_variable := '0';
                 END IF;
+
             ELSIF (B='1') THEN
                 IF (estado_atual=E0) THEN
-                    F := '0';
-                    A := '1';
+                    Fechando_variable := '0';
+                    Abrindo_variable := '1';
                 ELSIF (estado_atual=E3) THEN
-                    F := '1';
-                    A := '0';
+                    Fechando_variable := '1';
+                    Abrindo_variable := '0';
                 END IF;
             END IF;
+            ------------------------------------------
 
+
+            ------------------------------------------
+            -- LÓGICA DE TROCA DE ESTADOS
             IF (estado_atual=E0) THEN
-                IF (A='1' and F='0') THEN
+                IF (Abrindo_variable='1' and Fechando_variable='0') THEN
                     estado_atual <= E1;
                     SF <= '0';
                 ELSE SF <= '1';
                 END IF;
             
             ELSIF (estado_atual=E3) THEN
-                IF (A='0' and F='1') THEN
+                IF (Abrindo_variable='0' and Fechando_variable='1') THEN
                     estado_atual <= E2;
                     SA <= '0';
                 END IF;
             
             ELSIF (estado_atual=E1) THEN
-                IF (A='1' and F='0') THEN estado_atual <= E2;
+                IF (Abrindo_variable='1' and Fechando_variable='0') THEN estado_atual <= E2;
                 ELSIF (A='0' and F='1') THEN
                     estado_atual <= E0;
-                    F := '0';
+                    Fechando_variable := '0';
                     SF <= '1';
                 END IF;
             
             ELSE
-                IF (A='1' and F='0') THEN
+                IF (Abrindo_variable='1' and Fechando_variable='0') THEN
                     estado_atual <= E3;
-                    A := '0';
+                    Abrindo_variable := '0';
                     SA <= '1';
-                ELSIF (A='0' and F='1') THEN estado_atual <= E1;
+                ELSIF (Abrindo_variable='0' and Fechando_variable='1') THEN estado_atual <= E1;
                 END IF;
             END IF;
+
+            Abrindo_signal <= Abrindo_variable;
+            Fechando_signal <= Fechando_variable;
+
+            A <= Abrindo_variable;
+            F <= Fechando_variable;
+
         END IF;
+        ------------------------------------------
+
         
     end process;
 
